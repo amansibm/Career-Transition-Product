@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Mentor, SuggestedRole } from '../types';
+import { generateMentorPersona } from '../services/geminiService';
 import { Button } from './Button';
 
 interface MentorMatchProps {
@@ -7,47 +8,32 @@ interface MentorMatchProps {
   onMatchConfirmed: (mentor: Mentor) => void;
 }
 
-const MENTOR_PERSONAS: Mentor[] = [
-  {
-    name: "Elena Rodriguez",
-    role: "Senior Product Manager",
-    company: "TechFlow Inc.",
-    bio: "Transitioned from Marketing to Product 5 years ago. Expert in stakeholder management and agile workflows.",
-    avatarUrl: "https://picsum.photos/200/200?random=1"
-  },
-  {
-    name: "David Chen",
-    role: "Lead Data Scientist",
-    company: "DataSphere",
-    bio: "Former academic researcher who moved into industry. passionate about practical ML applications.",
-    avatarUrl: "https://picsum.photos/200/200?random=2"
-  },
-  {
-    name: "Sarah Jenkins",
-    role: "UX Research Director",
-    company: "Creative Pulse",
-    bio: "Psychology background turned UX leader. Helps career switchers build portfolios that tell a story.",
-    avatarUrl: "https://picsum.photos/200/200?random=3"
-  }
-];
-
 export const MentorMatch: React.FC<MentorMatchProps> = ({ role, onMatchConfirmed }) => {
-  const [status, setStatus] = useState<'searching' | 'found'>('searching');
+  const [status, setStatus] = useState<'searching' | 'analyzing' | 'found'>('searching');
   const [matchedMentor, setMatchedMentor] = useState<Mentor | null>(null);
 
   useEffect(() => {
-    // Simulate searching algorithm
-    const timer = setTimeout(() => {
-      // Simple random selection for demo, ideally would match based on role title
-      const mentor = MENTOR_PERSONAS[Math.floor(Math.random() * MENTOR_PERSONAS.length)];
-      setMatchedMentor(mentor);
-      setStatus('found');
-    }, 2500);
+    let mounted = true;
 
-    return () => clearTimeout(timer);
-  }, []);
+    const findMentor = async () => {
+      // Step 1: Simulate searching network
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (mounted) setStatus('analyzing');
+      
+      // Step 2: Generate specific mentor profile via AI
+      const mentor = await generateMentorPersona(role.title);
+      
+      if (mounted) {
+        setMatchedMentor(mentor);
+        setStatus('found');
+      }
+    };
 
-  if (status === 'searching') {
+    findMentor();
+    return () => { mounted = false; };
+  }, [role.title]);
+
+  if (status !== 'found') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="relative w-24 h-24 mb-8">
@@ -57,8 +43,12 @@ export const MentorMatch: React.FC<MentorMatchProps> = ({ role, onMatchConfirmed
              <span className="text-3xl">🤝</span>
            </div>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">Finding your Career Ally...</h2>
-        <p className="text-slate-500">Scanning our network for mentors who have successfully transitioned into {role.title}.</p>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          {status === 'searching' ? 'Scanning Professional Network...' : 'Identifying Best Match...'}
+        </h2>
+        <p className="text-slate-500 max-w-md">
+          Finding a senior leader in <span className="font-semibold text-indigo-600">{role.title}</span> who matches your background.
+        </p>
       </div>
     );
   }
@@ -70,25 +60,25 @@ export const MentorMatch: React.FC<MentorMatchProps> = ({ role, onMatchConfirmed
         
         <div className="mb-6">
           <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold mb-4">
-            It's a Match!
+            Perfect Mentor Found
           </span>
           <img 
             src={matchedMentor?.avatarUrl} 
             alt={matchedMentor?.name}
-            className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover"
+            className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg bg-slate-100 object-cover"
           />
         </div>
 
         <h2 className="text-3xl font-bold text-slate-900 mb-1">{matchedMentor?.name}</h2>
-        <p className="text-indigo-600 font-medium mb-4">{matchedMentor?.role} at {matchedMentor?.company}</p>
+        <p className="text-indigo-600 font-medium text-lg mb-4">{matchedMentor?.role} at {matchedMentor?.company}</p>
         
         <blockquote className="text-slate-600 italic mb-8 border-l-4 border-indigo-100 pl-4 text-left mx-auto max-w-md bg-slate-50 p-4 rounded-r-lg">
           "{matchedMentor?.bio}"
         </blockquote>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-sm text-slate-500">
-            {matchedMentor?.name.split(' ')[0]} will guide you through your 90-day plan to become a {role.title}.
+            {matchedMentor?.name.split(' ')[0]} has deep expertise in {role.title} and is ready to guide your transition.
           </p>
           <Button 
             onClick={() => matchedMentor && onMatchConfirmed(matchedMentor)}

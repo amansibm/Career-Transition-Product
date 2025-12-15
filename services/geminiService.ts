@@ -1,11 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { SuggestedRole, Roadmap, RoadmapWeek, InterviewFeedback, UserProfile } from "../types";
+import { SuggestedRole, Roadmap, RoadmapWeek, InterviewFeedback, UserProfile, Mentor } from "../types";
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const ROLE_DISCOVERY_MODEL = "gemini-2.5-flash";
-const ROADMAP_MODEL = "gemini-2.5-flash"; // Capable enough for planning and faster
+const ROADMAP_MODEL = "gemini-2.5-flash";
 const PITCH_MODEL = "gemini-2.5-flash";
 const CHAT_MODEL = "gemini-2.5-flash";
 const INTERVIEW_MODEL = "gemini-2.5-flash";
@@ -109,7 +109,6 @@ export const generateRoadmap = async (targetRole: string, currentBackground: str
     return data as Roadmap;
   } catch (error) {
     console.error("Error generating roadmap:", error);
-    // Return a fallback structure in case of error
     return { overview: "Could not generate roadmap. Please try again.", weeks: [] };
   }
 };
@@ -137,6 +136,86 @@ export const generatePitch = async (resumeText: string, jobDescription: string, 
   } catch (error) {
     console.error("Error generating pitch:", error);
     return "Error generating content. Please check your inputs.";
+  }
+};
+
+export const tailorResume = async (originalResume: string, targetRole: string, jobDescription?: string): Promise<string> => {
+  try {
+      const prompt = `
+          You are an expert Resume Writer and Career Coach.
+          Rewrite the following resume to specifically target a ${targetRole} position.
+          ${jobDescription ? `Tailor it specifically to this Job Description: ${jobDescription}` : ''}
+          
+          Guidelines:
+          1. Create a strong Professional Summary highlighting the pivot to ${targetRole}.
+          2. Rewrite bullet points to emphasize transferrable skills relevant to ${targetRole}.
+          3. Use strong action verbs and quantify achievements where possible.
+          4. Output the result in clean, structured Markdown format.
+
+          Original Resume:
+          ${originalResume.substring(0, 10000)}
+      `;
+
+      const response = await ai.models.generateContent({
+          model: PITCH_MODEL,
+          contents: prompt
+      });
+
+      return response.text || "Could not generate resume.";
+  } catch (e) {
+      console.error("Error tailoring resume:", e);
+      return "Error tailoring resume. Please try again.";
+  }
+};
+
+export const generateMentorPersona = async (targetRoleTitle: string): Promise<Mentor> => {
+  try {
+    const prompt = `
+      Create a realistic persona for a senior industry mentor who is an expert in ${targetRoleTitle}.
+      The mentor must have a designation equivalent to or higher than a senior ${targetRoleTitle} (e.g., Lead, Principal, Director, VP).
+      
+      The bio should be encouraging and mention their experience helping people transition into this field.
+      
+      Output JSON only.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            role: { type: Type.STRING, description: "A senior job title" },
+            company: { type: Type.STRING, description: "A fictional but realistic tech company name" },
+            bio: { type: Type.STRING },
+            avatarUrl: { type: Type.STRING, description: "Use a seed string for https://api.dicebear.com/7.x/avataaars/svg?seed=[Seed]" }
+          },
+          required: ["name", "role", "company", "bio", "avatarUrl"]
+        }
+      }
+    });
+     const jsonText = response.text || "{}";
+     const data = JSON.parse(jsonText);
+     
+     // Ensure avatar URL is valid or fallback
+     if (!data.avatarUrl || !data.avatarUrl.startsWith('http')) {
+        data.avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name.replace(' ', '')}`;
+     }
+     
+     return data as Mentor;
+  } catch (error) {
+    console.error("Mentor generation failed", error);
+    // Fallback
+    return {
+        name: "Alex Rivera",
+        role: `Senior ${targetRoleTitle} Lead`,
+        company: "Innovate Inc.",
+        bio: `I've spent 15 years in ${targetRoleTitle} and love helping motivated professionals make the switch.`,
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=AlexRivera`
+    };
   }
 };
 
