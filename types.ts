@@ -17,6 +17,13 @@ export interface DiscProfile {
 export interface UserProfile {
   name: string;
   resumeText: string;
+  location?: string;
+  relocation?: boolean;
+  remotePreference?: 'Remote' | 'Hybrid' | 'On-site' | 'Any';
+  salaryExpectation?: string;
+  targetIndustries?: string[];
+  coreValues?: string[];
+  desiredSkills?: string;
   discProfile?: DiscProfile;
   targetRole?: SuggestedRole;
 }

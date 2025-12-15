@@ -19,8 +19,8 @@ export const RoleDiscovery: React.FC<RoleDiscoveryProps> = ({ userProfile, onRol
     const fetchRoles = async () => {
       try {
         if (!userProfile.resumeText) return;
-        const discType = userProfile.discProfile?.dominantType || 'Unknown';
-        const results = await discoverRoles(userProfile.resumeText, discType);
+        // Pass the entire profile object now
+        const results = await discoverRoles(userProfile);
         
         if (mounted) {
           if (results.length === 0) {
@@ -49,7 +49,7 @@ export const RoleDiscovery: React.FC<RoleDiscoveryProps> = ({ userProfile, onRol
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Analyzing your potential...</h2>
-        <p className="text-slate-500 max-w-md">Our AI is mapping your skills from your resume and personality traits to high-growth career paths.</p>
+        <p className="text-slate-500 max-w-md">Our AI is analyzing your profile, preferences, and current market trends to find your best matches.</p>
       </div>
     );
   }
@@ -67,7 +67,7 @@ export const RoleDiscovery: React.FC<RoleDiscoveryProps> = ({ userProfile, onRol
     <div className="max-w-5xl mx-auto p-6">
       <div className="mb-10 text-center">
         <h2 className="text-3xl font-bold text-slate-900 mb-3">Your Top Matches</h2>
-        <p className="text-slate-600">Based on your {userProfile.discProfile?.dominantType}-Type personality and experience, here are your best pivot options.</p>
+        <p className="text-slate-600">Based on your {userProfile.discProfile?.dominantType}-Type personality, preferences, and experience.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

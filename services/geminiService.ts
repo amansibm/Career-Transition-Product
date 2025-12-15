@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { SuggestedRole, Roadmap, RoadmapWeek, InterviewFeedback } from "../types";
+import { SuggestedRole, Roadmap, RoadmapWeek, InterviewFeedback, UserProfile } from "../types";
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -10,14 +10,26 @@ const PITCH_MODEL = "gemini-2.5-flash";
 const CHAT_MODEL = "gemini-2.5-flash";
 const INTERVIEW_MODEL = "gemini-2.5-flash";
 
-export const discoverRoles = async (resumeText: string, discType: string): Promise<SuggestedRole[]> => {
+export const discoverRoles = async (profile: UserProfile): Promise<SuggestedRole[]> => {
   try {
     const prompt = `
-      Analyze the following resume content and DISC personality type (${discType}).
-      Identify 3 ideal career transition roles that leverage the candidate's existing strengths while offering a fresh direction.
+      You are an expert Career Strategist Agent.
+      Analyze the candidate profile below and suggest 3 viable career transition roles.
       
-      Resume Content:
-      ${resumeText.substring(0, 10000)}
+      Candidate Profile:
+      - Resume Summary: ${profile.resumeText.substring(0, 8000)}
+      - DISC Personality: ${profile.discProfile?.dominantType || 'Unknown'}
+      - Location: ${profile.location || 'Not specified'} (Relocation: ${profile.relocation ? 'Yes' : 'No'})
+      - Work Preference: ${profile.remotePreference || 'Flexible'}
+      - Target Industries: ${profile.targetIndustries?.join(', ') || 'Open'}
+      - Core Values: ${profile.coreValues?.join(', ') || 'Not specified'}
+      - Desired Skills to Use: ${profile.desiredSkills || 'Not specified'}
+
+      Task:
+      1. Consider current market trends and demand for ${profile.location || 'global markets'}.
+      2. Match the candidate's transferrable skills and personality to high-growth roles.
+      3. Respect constraints (remote/location/industries).
+      4. Provide a match score and reasoning for each.
     `;
 
     const response = await ai.models.generateContent({
