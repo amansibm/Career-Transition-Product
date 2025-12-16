@@ -14,16 +14,22 @@ export interface DiscProfile {
   dominantType: string;
 }
 
+export interface Skill {
+  name: string;
+  level: 'Beginner' | 'Intermediate' | 'Expert';
+}
+
 export interface UserProfile {
   name: string;
   resumeText: string;
   location?: string;
   relocation?: boolean;
   remotePreference?: 'Remote' | 'Hybrid' | 'On-site' | 'Any';
+  financialRunway?: string;
   salaryExpectation?: string;
   targetIndustries?: string[];
   coreValues?: string[];
-  desiredSkills?: string;
+  topSkills?: Skill[];
   discProfile?: DiscProfile;
   targetRole?: SuggestedRole;
 }
@@ -33,6 +39,12 @@ export interface SuggestedRole {
   matchScore: number;
   reasoning: string;
   skillsGap: string[];
+  salary: {
+    starting: string;
+    year2: string;
+    year5: string;
+  };
+  careerJourney: string[];
 }
 
 export interface RoadmapWeek {

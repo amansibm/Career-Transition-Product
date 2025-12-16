@@ -21,15 +21,18 @@ export const discoverRoles = async (profile: UserProfile): Promise<SuggestedRole
       - DISC Personality: ${profile.discProfile?.dominantType || 'Unknown'}
       - Location: ${profile.location || 'Not specified'} (Relocation: ${profile.relocation ? 'Yes' : 'No'})
       - Work Preference: ${profile.remotePreference || 'Flexible'}
+      - Financial Runway/Urgency: ${profile.financialRunway || 'Medium'} (Important: ${profile.financialRunway === 'Urgent' ? 'Prioritize roles with low barrier to entry/fast hiring' : 'Can suggest roles requiring upskilling'})
       - Target Industries: ${profile.targetIndustries?.join(', ') || 'Open'}
       - Core Values: ${profile.coreValues?.join(', ') || 'Not specified'}
-      - Desired Skills to Use: ${profile.desiredSkills || 'Not specified'}
+      - Self-Rated Skills: ${profile.topSkills?.map(s => `${s.name} (${s.level})`).join(', ') || 'See resume'}
 
       Task:
       1. Consider current market trends and demand for ${profile.location || 'global markets'}.
       2. Match the candidate's transferrable skills and personality to high-growth roles.
-      3. Respect constraints (remote/location/industries).
-      4. Provide a match score and reasoning for each.
+      3. Respect constraints (financial runway is critical).
+      4. Provide a visual career journey and salary projection for 5 years.
+      
+      Output JSON matching the schema.
     `;
 
     const response = await ai.models.generateContent({
@@ -45,9 +48,23 @@ export const discoverRoles = async (profile: UserProfile): Promise<SuggestedRole
               title: { type: Type.STRING },
               matchScore: { type: Type.NUMBER, description: "Percentage match 0-100" },
               reasoning: { type: Type.STRING },
-              skillsGap: { type: Type.ARRAY, items: { type: Type.STRING } }
+              skillsGap: { type: Type.ARRAY, items: { type: Type.STRING } },
+              salary: {
+                type: Type.OBJECT,
+                properties: {
+                  starting: { type: Type.STRING, description: "e.g. $70k" },
+                  year2: { type: Type.STRING, description: "e.g. $90k" },
+                  year5: { type: Type.STRING, description: "e.g. $130k" }
+                },
+                required: ["starting", "year2", "year5"]
+              },
+              careerJourney: { 
+                type: Type.ARRAY, 
+                items: { type: Type.STRING },
+                description: "List of 3-4 job titles representing the 5-year progression" 
+              }
             },
-            required: ["title", "matchScore", "reasoning", "skillsGap"]
+            required: ["title", "matchScore", "reasoning", "skillsGap", "salary", "careerJourney"]
           }
         }
       }

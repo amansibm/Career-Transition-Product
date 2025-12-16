@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { UserProfile, DiscProfile } from '../types';
+import { UserProfile, DiscProfile, Skill } from '../types';
 
 interface OnboardingProps {
   onComplete: (profile: UserProfile) => void;
@@ -80,11 +80,15 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [location, setLocation] = useState('');
   const [relocation, setRelocation] = useState<boolean | null>(null);
   const [remotePreference, setRemotePreference] = useState<any>('');
-  const [salaryExpectation, setSalaryExpectation] = useState('');
+  const [financialRunway, setFinancialRunway] = useState('');
   
   const [targetIndustries, setTargetIndustries] = useState<string[]>([]);
   const [coreValues, setCoreValues] = useState<string[]>([]);
-  const [desiredSkills, setDesiredSkills] = useState('');
+  
+  // Skill State
+  const [skillInput, setSkillInput] = useState('');
+  const [skillLevel, setSkillLevel] = useState<'Beginner' | 'Intermediate' | 'Expert'>('Intermediate');
+  const [topSkills, setTopSkills] = useState<Skill[]>([]);
   
   const [discAnswers, setDiscAnswers] = useState<Record<number, string>>({});
 
@@ -98,6 +102,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     } else {
       if (list.length < 3) setList([...list, item]);
     }
+  };
+
+  const addSkill = () => {
+    if (skillInput.trim() && topSkills.length < 10) {
+      setTopSkills([...topSkills, { name: skillInput.trim(), level: skillLevel }]);
+      setSkillInput('');
+    }
+  };
+
+  const removeSkill = (index: number) => {
+    setTopSkills(topSkills.filter((_, i) => i !== index));
   };
 
   const calculateDisc = (): DiscProfile => {
@@ -117,17 +132,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       location,
       relocation: relocation || false,
       remotePreference,
-      salaryExpectation,
+      financialRunway,
       targetIndustries,
       coreValues,
-      desiredSkills,
+      topSkills,
       discProfile
     });
   };
 
   const isStep1Valid = name.trim().length > 0 && resumeText.trim().length > 50;
-  const isStep2Valid = location.trim().length > 0 && relocation !== null && remotePreference !== '';
-  const isStep3Valid = targetIndustries.length > 0 && coreValues.length > 0;
+  const isStep2Valid = location.trim().length > 0 && relocation !== null && remotePreference !== '' && financialRunway !== '';
+  const isStep3Valid = targetIndustries.length > 0 && topSkills.length > 0;
   const isStep4Valid = Object.keys(discAnswers).length === DISC_QUESTIONS.length;
 
   return (
@@ -142,7 +157,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 animate-fadeIn min-h-[400px] flex flex-col">
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 animate-fadeIn min-h-[500px] flex flex-col">
         
         {/* Step 1: Basic Info */}
         {step === 1 && (
@@ -171,47 +186,35 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           </div>
         )}
 
-        {/* Step 2: Logistics */}
+        {/* Step 2: Logistics & Finance */}
         {step === 2 && (
           <div className="space-y-6 flex-grow">
-            <h3 className="text-xl font-semibold mb-4">Logistics & Constraints</h3>
+            <h3 className="text-xl font-semibold mb-4">Logistics & Financial Constraints</h3>
             
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Where are you currently based?</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder="e.g. New York, NY"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Current Location</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="e.g. New York, NY"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Open to relocation?</label>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setRelocation(true)}
-                  className={`flex-1 py-2 px-4 rounded-lg border ${relocation === true ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'border-slate-200'}`}
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setRelocation(false)}
-                  className={`flex-1 py-2 px-4 rounded-lg border ${relocation === false ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'border-slate-200'}`}
-                >
-                  No
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Relocation?</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setRelocation(true)} className={`flex-1 py-2 px-3 rounded-lg border text-sm ${relocation === true ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'border-slate-200'}`}>Yes</button>
+                  <button onClick={() => setRelocation(false)} className={`flex-1 py-2 px-3 rounded-lg border text-sm ${relocation === false ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'border-slate-200'}`}>No</button>
+                </div>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Work Preference</label>
-              <select 
-                value={remotePreference} 
-                onChange={(e) => setRemotePreference(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
+              <select value={remotePreference} onChange={(e) => setRemotePreference(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                 <option value="" disabled>Select preference...</option>
                 <option value="Remote">Remote</option>
                 <option value="Hybrid">Hybrid</option>
@@ -219,14 +222,60 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 <option value="Any">Open to anything</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Financial Runway / Urgency</label>
+              <p className="text-xs text-slate-500 mb-2">This helps us suggest roles with appropriate training timelines.</p>
+              <select value={financialRunway} onChange={(e) => setFinancialRunway(e.target.value)} className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="" disabled>Select runway...</option>
+                <option value="Urgent">Immediate (Need job within 1 month)</option>
+                <option value="Short">Short Term (1-3 months)</option>
+                <option value="Medium">Medium Term (3-6 months)</option>
+                <option value="Long">Secure (6 months+ / Currently Employed)</option>
+              </select>
+            </div>
           </div>
         )}
 
-        {/* Step 3: Interests */}
+        {/* Step 3: Skills & Interests */}
         {step === 3 && (
           <div className="space-y-6 flex-grow">
-            <h3 className="text-xl font-semibold mb-4">Interests & Values</h3>
+            <h3 className="text-xl font-semibold mb-4">Skills & Interests</h3>
             
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Key Skills & Proficiency</label>
+              <div className="flex gap-2 mb-3">
+                <input 
+                  type="text" 
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addSkill()}
+                  placeholder="e.g. Project Management"
+                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+                <select 
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value as any)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Expert">Expert</option>
+                </select>
+                <Button onClick={addSkill} disabled={!skillInput.trim()}>Add</Button>
+              </div>
+              <div className="flex flex-wrap gap-2 min-h-[40px]">
+                {topSkills.map((skill, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm border border-indigo-100">
+                    <span className="font-medium">{skill.name}</span>
+                    <span className="text-xs text-indigo-400">({skill.level})</span>
+                    <button onClick={() => removeSkill(idx)} className="ml-1 text-indigo-400 hover:text-indigo-600">×</button>
+                  </span>
+                ))}
+                {topSkills.length === 0 && <span className="text-sm text-slate-400 italic">Add at least one skill...</span>}
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Top 3 Target Industries</label>
               <div className="flex flex-wrap gap-2">
@@ -247,7 +296,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Top 3 Career Values</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Core Values (Select up to 3)</label>
               <div className="flex flex-wrap gap-2">
                 {VALUES.map(val => (
                   <button
@@ -263,16 +312,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">What skills do you WANT to use?</label>
-              <textarea
-                value={desiredSkills}
-                onChange={(e) => setDesiredSkills(e.target.value)}
-                className="w-full h-24 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                placeholder="e.g. Public speaking, Python, Creative writing..."
-              />
             </div>
           </div>
         )}
